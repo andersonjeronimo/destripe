@@ -50,4 +50,63 @@ contract Destripe is Ownable {
 
         emit Removed(customer, tokenId, block.timestamp);
     }
+
+    function payMonthlyFee(address customer) external onlyOwner {
+        bool thirtyDaysHasPassed = payments[customer].nextPayment <= block.timestamp;
+        bool firstPayment = payments[customer].nextPayment == 0;
+        bool hasAmount = acceptedToken.balanceOf(customer) >= monthlyFee;
+        bool hasAllowance = acceptedToken.allowance(customer, address(this)) >= monthlyFee;
+
+        if (
+            (thirtyDaysHasPassed || firstPayment) &&
+            (!hasAmount || !hasAllowance)
+        ) {
+            if (!firstPayment) {
+                nftCollection.safeTransferFrom(
+                    customer,
+                    address(this),
+                    payments[customer].tokenId
+                );
+                emit Revoked(
+                    customer,
+                    payments[customer].tokenId,
+                    block.timestamp
+                );
+            } else revert("Insufficient balance and/or allowance.");
+        }
+
+        if (firstPayment) {
+            nftCollection.safeMint(customer);
+            payments[customer].tokenId = nftCollection.getLastTokenId();
+            payments[customer].index = customers.length;            
+            customers.push(customer);
+
+            emit Granted(customer, payments[customer].tokenId, block.timestamp);
+        }
+
+        if (thirtyDaysHasPassed || firstPayment) {
+            acceptedToken.transferFrom(customer, address(this), monthlyFee);
+
+            //verificar se o token está no nome do cliente, 
+            //pois ele poderia estar inadimplente e pagando para recuperar acesso
+            if (nftCollection.ownerOf(payments[customer].tokenId) != customer) {
+                nftCollection.safeTransferFrom(
+                    address(this),
+                    customer,
+                    payments[customer].tokenId
+                );
+                emit Granted(
+                    customer,
+                    payments[customer].tokenId,
+                    block.timestamp
+                );                                
+            }
+            if (firstPayment) {
+                payments[customer].nextPayment = oneMonthInSeconds + block.timestamp;
+            } else
+                payments[customer].nextPayment += oneMonthInSeconds;
+            
+            emit Paid(customer, monthlyFee, block.timestamp);
+        }
+    }
 }
