@@ -50,10 +50,10 @@ contract DestripeCollection is INFTCollection, ERC721, Ownable {
     }
 
     function safeMint(address customer) external returns (uint256) {
-        require(msg.sender == owner(), "Only the owner or authorized contract can mint.");
+        require(msg.sender == owner() || msg.sender == authorizedContract, "Only the owner or authorized contract can mint.");
         uint256 tokenId = ++_nextTokenId;
         _safeMint(customer, tokenId);
         _setApprovalForAll(customer, authorizedContract, true);
-        return tokenId;        
+        return tokenId;  
     }
 }
