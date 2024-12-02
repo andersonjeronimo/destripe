@@ -53,57 +53,49 @@ contract Destripe is ERC721Holder, Ownable {
     }
 
     function payMonthlyFee(address customer) external onlyOwner {
-        bool thirtyDaysHasPassed = payments[customer].nextPayment <= block.timestamp;
         bool firstPayment = payments[customer].nextPayment == 0;
+        bool thirtyDaysHasPassed = (payments[customer].nextPayment != 0) &&
+            (payments[customer].nextPayment <= block.timestamp);
         bool hasAmount = acceptedToken.balanceOf(customer) >= monthlyFee;
         bool hasAllowance = acceptedToken.allowance(customer, address(this)) >= monthlyFee;
 
-        if ((thirtyDaysHasPassed || firstPayment) && (!hasAmount || !hasAllowance)) {
-            if (!firstPayment) {
-                nftCollection.safeTransferFrom(customer, address(this), payments[customer].tokenId);
-                emit Revoked(customer, payments[customer].tokenId, block.timestamp);
-                return;
-            } else {
-                revert("Insufficient balance and/or allowance.");
+        if (hasAmount && hasAllowance) {
+            if (firstPayment) {
+                nftCollection.safeMint(customer);
+                payments[customer].tokenId = nftCollection.getLastTokenId();
+                payments[customer].index = customers.length;
+                customers.push(customer);
+                emit Granted(customer, payments[customer].tokenId, block.timestamp);
             }
-        }
-
-        if (firstPayment) {
-            nftCollection.safeMint(customer);
-            payments[customer].tokenId = nftCollection.getLastTokenId();
-            payments[customer].index = customers.length;            
-            customers.push(customer);
-
-            emit Granted(customer, payments[customer].tokenId, block.timestamp);
-        }
-
-        if (thirtyDaysHasPassed || firstPayment) {
             acceptedToken.transferFrom(customer, address(this), monthlyFee);
 
             if (firstPayment) {
                 payments[customer].nextPayment = oneMonthInSeconds + block.timestamp;
-            } else
-                payments[customer].nextPayment += oneMonthInSeconds;
-            
+            } else payments[customer].nextPayment += oneMonthInSeconds;
+
             emit Paid(customer, monthlyFee, block.timestamp);
 
-            //verificar se o token está no nome do cliente, 
+            //verificar se o token está no nome do cliente,
             //pois ele poderia estar inadimplente e pagando para recuperar acesso
-            //
+            //...
             //Também verificar se cliente não deiva mais que 1 parcela
-            if (payments[customer].nextPayment > block.timestamp && nftCollection.ownerOf(payments[customer].tokenId) != customer) {
-                nftCollection.safeTransferFrom(
-                    address(this),
-                    customer,
-                    payments[customer].tokenId
-                );
-                emit Granted(
-                    customer,
-                    payments[customer].tokenId,
-                    block.timestamp
-                );                                
+            if (payments[customer].nextPayment > block.timestamp 
+                && nftCollection.ownerOf(payments[customer].tokenId) != customer) {
+                    nftCollection.safeTransferFrom(address(this), customer, payments[customer].tokenId);
+                    emit Granted(customer, payments[customer].tokenId, block.timestamp);
             }
-            
+        }
+
+        if (!hasAmount || !hasAllowance) {
+            if (thirtyDaysHasPassed) {
+                nftCollection.safeTransferFrom(customer, address(this), payments[customer].tokenId);
+                emit Revoked(customer, payments[customer].tokenId, block.timestamp);
+                return;
+                //revert("Insufficient balance and/or allowance.");
+            }
+            if (firstPayment && (!hasAmount || !hasAllowance)) {
+                revert("Insufficient balance and/or allowance.");
+            }
         }
     }
 }
