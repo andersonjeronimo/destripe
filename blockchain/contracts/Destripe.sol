@@ -5,9 +5,10 @@ pragma solidity ^0.8.22;
 // import "hardhat/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./INFTCollection.sol";
 
-contract Destripe is Ownable {
+contract Destripe is ERC721Holder, Ownable {
     INFTCollection public nftCollection;
     IERC20 public acceptedToken;
 
@@ -57,22 +58,14 @@ contract Destripe is Ownable {
         bool hasAmount = acceptedToken.balanceOf(customer) >= monthlyFee;
         bool hasAllowance = acceptedToken.allowance(customer, address(this)) >= monthlyFee;
 
-        if (
-            (thirtyDaysHasPassed || firstPayment) &&
-            (!hasAmount || !hasAllowance)
-        ) {
+        if ((thirtyDaysHasPassed || firstPayment) && (!hasAmount || !hasAllowance)) {
             if (!firstPayment) {
-                nftCollection.safeTransferFrom(
-                    customer,
-                    address(this),
-                    payments[customer].tokenId
-                );
-                emit Revoked(
-                    customer,
-                    payments[customer].tokenId,
-                    block.timestamp
-                );
-            } else revert("Insufficient balance and/or allowance.");
+                nftCollection.safeTransferFrom(customer, address(this), payments[customer].tokenId);
+                emit Revoked(customer, payments[customer].tokenId, block.timestamp);
+                return;
+            } else {
+                revert("Insufficient balance and/or allowance.");
+            }
         }
 
         if (firstPayment) {
@@ -87,9 +80,18 @@ contract Destripe is Ownable {
         if (thirtyDaysHasPassed || firstPayment) {
             acceptedToken.transferFrom(customer, address(this), monthlyFee);
 
+            if (firstPayment) {
+                payments[customer].nextPayment = oneMonthInSeconds + block.timestamp;
+            } else
+                payments[customer].nextPayment += oneMonthInSeconds;
+            
+            emit Paid(customer, monthlyFee, block.timestamp);
+
             //verificar se o token está no nome do cliente, 
             //pois ele poderia estar inadimplente e pagando para recuperar acesso
-            if (nftCollection.ownerOf(payments[customer].tokenId) != customer) {
+            //
+            //Também verificar se cliente não deiva mais que 1 parcela
+            if (payments[customer].nextPayment > block.timestamp && nftCollection.ownerOf(payments[customer].tokenId) != customer) {
                 nftCollection.safeTransferFrom(
                     address(this),
                     customer,
@@ -101,12 +103,7 @@ contract Destripe is Ownable {
                     block.timestamp
                 );                                
             }
-            if (firstPayment) {
-                payments[customer].nextPayment = oneMonthInSeconds + block.timestamp;
-            } else
-                payments[customer].nextPayment += oneMonthInSeconds;
             
-            emit Paid(customer, monthlyFee, block.timestamp);
         }
     }
 }

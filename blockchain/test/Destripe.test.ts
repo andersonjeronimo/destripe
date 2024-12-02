@@ -1,4 +1,4 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import hre, { ethers } from "hardhat";
 
@@ -31,7 +31,8 @@ describe("Destripe", function () {
   }
 
   describe("Deployment", function () {
-    it("Should do first payment", async function () {
+    
+    it("Accepted ERC20 token should approve and allow", async function () {
       const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
       
       const customerCoinInstance = coin.connect(otherAccount);
@@ -41,10 +42,67 @@ describe("Destripe", function () {
       const allowance = await coin.allowance(otherAccount.address, protocol.getAddress());      
 
       expect(Number(balance)).to.equal(Number(hre.ethers.parseEther("1")));
-      expect(Number(allowance)).to.equal(Number(hre.ethers.parseEther("0.01")));
+      expect(Number(allowance)).to.equal(Number(hre.ethers.parseEther("0.01")));      
+    });
+
+    it("Should do first payment", async function () {
+      const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
+      
+      const customerCoinInstance = coin.connect(otherAccount);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.01"));      
+
+      await expect(protocol.payMonthlyFee(otherAccount.address)).to.emit(protocol, "Granted");
+    });    
+
+    it("Should NOT do first payment", async function () {
+      const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
+      
+      const customerCoinInstance = coin.connect(otherAccount);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.00001"));   
+
+      await expect(protocol.payMonthlyFee(otherAccount.address)).to.be.revertedWith("Insufficient balance and/or allowance.");
+    });
+
+    it("Should do second payment", async function () {
+      const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
+      
+      const customerCoinInstance = coin.connect(otherAccount);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.01"));
+      
+      await protocol.payMonthlyFee(otherAccount.address);
+      await time.increase(31 * 24 * 60 * 60);
+
+      await expect(protocol.payMonthlyFee(otherAccount.address)).to.emit(protocol, "Paid");
+    });
+
+    it("Should NOT do second payment", async function () {
+      const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
+      
+      const customerCoinInstance = coin.connect(otherAccount);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.01"));
+      
+      await protocol.payMonthlyFee(otherAccount.address);
+      await time.increase(31 * 24 * 60 * 60);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.00001"));
+
+      await expect(protocol.payMonthlyFee(otherAccount.address)).to.emit(protocol, "Revoked");
+    });
+
+    it("Should do second payment after REVOKED event", async function () {
+      const { collection, coin, protocol, owner, otherAccount } = await loadFixture(deployFixture);
+      
+      const customerCoinInstance = coin.connect(otherAccount);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.01"));
+      
+      await protocol.payMonthlyFee(otherAccount.address);
+      await time.increase(31 * 24 * 60 * 60);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.00001"));
+      await protocol.payMonthlyFee(otherAccount.address);
+      await customerCoinInstance.approve(protocol.getAddress(), hre.ethers.parseEther("0.01"));
 
       await expect(protocol.payMonthlyFee(otherAccount.address)).to.emit(protocol, "Granted");
     });
+
   });  
 
 });
