@@ -1,7 +1,9 @@
 {
   "scripts": {
     "test": "npx hardhat test",
-    "compile": "npx hardhat compile"
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat ignition deploy ignition/modules/Destripe.module.ts --network sepolia",
+    "verify": "npx hardhat verify --network sepolia 0xf00000 '0xf0000'"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",

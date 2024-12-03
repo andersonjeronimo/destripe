@@ -31,9 +31,8 @@ contract Destripe is ERC721Holder, Ownable {
 
     constructor(
         address nftAddress,
-        address tokenAddress,
-        address initialOwner
-    ) Ownable(initialOwner) {
+        address tokenAddress        
+    ) Ownable(msg.sender) {
         nftCollection = INFTCollection(nftAddress);
         acceptedToken = IERC20(tokenAddress);
     }
@@ -75,10 +74,10 @@ contract Destripe is ERC721Holder, Ownable {
 
             emit Paid(customer, monthlyFee, block.timestamp);
 
-            //verificar se o token está no nome do cliente,
-            //pois ele poderia estar inadimplente e pagando para recuperar acesso
+            //verificar customer é o owner do token,
+            //pois ele poderia estar inadimplente e ter pagado para recuperar acesso
             //...
-            //Também verificar se cliente não deiva mais que 1 parcela
+            //Também verificar se customer não devia mais que 1 parcela
             if (payments[customer].nextPayment > block.timestamp 
                 && nftCollection.ownerOf(payments[customer].tokenId) != customer) {
                     nftCollection.safeTransferFrom(address(this), customer, payments[customer].tokenId);

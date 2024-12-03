@@ -12,9 +12,7 @@ contract DestripeCollection is INFTCollection, ERC721, Ownable {
     address public authorizedContract;
     string public baseURI = "https://localhost:3000/nfts/";
 
-    constructor(
-        address initialOwner
-    ) ERC721("Destripe", "DSC") Ownable(initialOwner) {}
+    constructor() ERC721("Destripe", "DSC") Ownable(msg.sender) {}
 
     function setAuthorizedContract(address newAuthContract) external onlyOwner {
         authorizedContract = newAuthContract;

@@ -13,16 +13,16 @@ describe("Destripe", function () {
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
     const DestripeCollection = await hre.ethers.getContractFactory("DestripeCollection");
-    const collection = await DestripeCollection.deploy(owner.address);
+    const collection = await DestripeCollection.deploy();
     await collection.waitForDeployment();
 
     const DestripeCoin = await hre.ethers.getContractFactory("DestripeCoin");
-    const coin = await DestripeCoin.deploy(owner.address);
+    const coin = await DestripeCoin.deploy();
     await coin.waitForDeployment();
     await coin.mint(otherAccount.address, hre.ethers.parseEther("1"));
 
     const Destripe = await hre.ethers.getContractFactory("Destripe");
-    const protocol = await Destripe.deploy(collection.getAddress(), coin.getAddress(), owner.address);
+    const protocol = await Destripe.deploy(collection.getAddress(), coin.getAddress());
     await protocol.waitForDeployment();
 
     await collection.setAuthorizedContract(protocol.getAddress());

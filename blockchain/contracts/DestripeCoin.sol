@@ -6,9 +6,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DestripeCoin is ERC20, Ownable {
-    constructor(address initialOwner)
+    constructor()
         ERC20("DestripeCoin", "DSK")
-        Ownable(initialOwner)
+        Ownable(msg.sender)
     {
         _mint(msg.sender, 1000 * 10 ** decimals());
     }
