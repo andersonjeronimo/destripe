@@ -6,7 +6,15 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.27",
+  defaultNetwork: "local",
   networks: {
+    local: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk"
+      }
+    },
     sepolia: {
       url: process.env.INFURA_URL,
       chainId: parseInt(`${process.env.CHAIN_ID}`),

@@ -53,7 +53,7 @@ contract Destripe is ERC721Holder, Ownable {
 
     function payMonthlyFee(address customer) external onlyOwner {
         bool firstPayment = payments[customer].nextPayment == 0;
-        bool thirtyDaysHasPassed = (payments[customer].nextPayment != 0) &&
+        bool thirtyDaysHasPassed = (payments[customer].nextPayment > 0) &&
             (payments[customer].nextPayment <= block.timestamp);
         bool hasAmount = acceptedToken.balanceOf(customer) >= monthlyFee;
         bool hasAllowance = acceptedToken.allowance(customer, address(this)) >= monthlyFee;
@@ -75,7 +75,7 @@ contract Destripe is ERC721Holder, Ownable {
             emit Paid(customer, monthlyFee, block.timestamp);
 
             //verificar customer é o owner do token,
-            //pois ele poderia estar inadimplente e ter pagado para recuperar acesso
+            //pois ele poderia estar inadimplente e ter pago para recuperar acesso
             //...
             //Também verificar se customer não devia mais que 1 parcela
             if (payments[customer].nextPayment > block.timestamp 
@@ -84,15 +84,12 @@ contract Destripe is ERC721Holder, Ownable {
                     emit Granted(customer, payments[customer].tokenId, block.timestamp);
             }
         }
-
-        if (!hasAmount || !hasAllowance) {
+        else {
             if (thirtyDaysHasPassed) {
                 nftCollection.safeTransferFrom(customer, address(this), payments[customer].tokenId);
                 emit Revoked(customer, payments[customer].tokenId, block.timestamp);
-                return;
-                //revert("Insufficient balance and/or allowance.");
-            }
-            if (firstPayment && (!hasAmount || !hasAllowance)) {
+                return;                
+            } else {
                 revert("Insufficient balance and/or allowance.");
             }
         }
