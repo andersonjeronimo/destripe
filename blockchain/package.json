@@ -3,7 +3,9 @@
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat ignition deploy ignition/modules/Destripe.module.ts --network sepolia",
-    "verify": "npx hardhat verify --network sepolia 0xf00000 '0xf0000'"
+    "verifyToken": "npx hardhat verify --network sepolia 0x61950A17F74755Bc830b3fde00b2baE917EB09f4",
+    "verifyTokenCollection": "npx hardhat verify --network sepolia 0xaF9EbA1310101DBCdb91E76a6e22713Eb3c323E4",
+    "verifyProtocol": "npx hardhat verify --network sepolia 0x4466599FA08ceFf9118F944fcCAf91e574042342"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",

@@ -29,12 +29,18 @@ contract Destripe is ERC721Holder, Ownable {
     event Revoked(address indexed customer, uint tokenId, uint date);
     event Removed(address indexed customer, uint tokenId, uint date);
 
-    constructor(
-        address nftAddress,
-        address tokenAddress        
-    ) Ownable(msg.sender) {
+    constructor() Ownable(msg.sender) { }
+
+    function setNFTCollection(address nftAddress) external onlyOwner {
         nftCollection = INFTCollection(nftAddress);
+    }
+
+    function setAcceptedToken(address tokenAddress) external onlyOwner {
         acceptedToken = IERC20(tokenAddress);
+    }    
+
+    function getCustomers() external view returns (address[] memory) {
+        return customers;
     }
 
     function setMonthlyFee(uint newMonthlyFee) external onlyOwner {
