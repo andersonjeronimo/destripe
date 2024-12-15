@@ -10,8 +10,7 @@ function getContract(): ethers.Contract {
 }
 
 function getCustomers(): Promise<string[]> {
-    return getContract().getCustomers(); //testar
-    //return getContract().customers();
+    return getContract().getCustomers(); //testar    
 }
 
 async function payment() {
