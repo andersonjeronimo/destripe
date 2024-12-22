@@ -19,6 +19,7 @@ describe("Destripe", function () {
     const DestripeCoin = await hre.ethers.getContractFactory("DestripeCoin");
     const coin = await DestripeCoin.deploy();
     await coin.waitForDeployment();
+    
     await coin.mint(otherAccount.address, hre.ethers.parseEther("1"));
 
     const Destripe = await hre.ethers.getContractFactory("Destripe");
