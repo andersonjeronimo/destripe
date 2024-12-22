@@ -32,22 +32,23 @@ function getCustomerInfo(customerAddress: string): Promise<CustomerInfo> {
 async function pay(customerAddress: string): Promise<string> {
     const tx = await getSigner().payMonthlyFee(customerAddress);
     const receipt = await tx.wait();
-    console.log(tx.hash);
+    //console.log(tx.hash);
     return tx.hash;
 }
 
 async function paymentCycle() {
     console.log(`Executing the payment cycle...`);
-    const customers: string[] = [`0xAd886e0aeCEbe71C1DA549FccCa811BB2662d91b`];//await getCustomers();
-    console.log(customers);
+    //const customers: string[] = [`0xAd886e0aeCEbe71C1DA549FccCa811BB2662d91b`];
+    const customers: string[] = await getCustomers();
+    //console.log(customers);
     //processamento...
     for (let index = 0; index < customers.length; index++) {
         if (customers[index] !== ethers.ZeroAddress) {
             const customer = await getCustomerInfo(customers[index]);            
-            await pay(customers[index]);
-            /* if (customer.nextPayment <= (Date.now() / 1000)) {
+            //await pay(customers[index]);
+            if (customer.nextPayment <= (Date.now() / 1000)) {
                 await pay(customers[index]);
-            } */
+            }
         }
     }
     console.log(`Finishing the payment cycle...`);
