@@ -54,7 +54,7 @@ async function paymentCycle() {
     console.log(`Finishing the payment cycle...`);
 }
 
-paymentCycle();
+//paymentCycle();
 
 const interval = 60 * 60 * 1000;
 setInterval(paymentCycle, interval);

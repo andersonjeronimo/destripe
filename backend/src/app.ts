@@ -30,7 +30,7 @@ app.get("/nfts/:tokenId", (req: Request, res: Response, next: NextFunction) => {
 
 app.get("/images/:tokenId", (req: Request, res: Response, next: NextFunction) => {
     const tokenId = req.params.tokenId;
-    res.download(`${__dirname}/images/${tokenId}`);
+    res.download(`${__dirname}/images/${tokenId}.png`);
 })
 
 export default app;
