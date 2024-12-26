@@ -1,5 +1,5 @@
 import 'express-async-errors';
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
@@ -18,19 +18,5 @@ app.use(express.json());
     res.status(500).send(error.message);
 })
  */
-//rotas
-app.get("/nfts/:tokenId", (req: Request, res: Response, next: NextFunction) => {
-    const tokenId = req.params.tokenId.replace(".json", "");
-    res.json({
-        name: "Access #" + tokenId,
-        description: "Your access to the system",
-        image: `${process.env.BACKEND_URL}/images/${tokenId}.png`
-    })
-})
-
-app.get("/images/:tokenId", (req: Request, res: Response, next: NextFunction) => {
-    const tokenId = req.params.tokenId;
-    res.download(`${__dirname}/images/${tokenId}.png`);
-})
 
 export default app;
